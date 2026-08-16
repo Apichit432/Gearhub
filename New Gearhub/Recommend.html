@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รีวิว — GEARHUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page-bg:#eef1f6;
+    --ink:#0f1729;
+    --ink-muted:#667085;
+    --line:#e7eaf1;
+    --card-bg:#ffffff;
+    --card-shadow: 0 2px 10px rgba(16,24,57,0.06);
+    --card-shadow-hover: 0 14px 30px rgba(16,24,57,0.12);
+    --blue:#2f5ce8;
+    --blue-dark:#1c3fb3;
+    --purple:#8b5cf6;
+    --radius:16px;
+    --maxw:1240px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--page-bg);
+    color:var(--ink);
+    font-family:'Kanit', sans-serif;
+    font-weight:300;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+  ul{ list-style:none; }
+  img,svg{ display:block; }
+
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 32px; }
+
+  /* ===== Header (matches site — white) ===== */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.94);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{ display:flex; align-items:center; justify-content:space-between; height:78px; }
+  .logo{ font-weight:700; font-size:21px; letter-spacing:0.3px; color:var(--ink); }
+  .logo span.hub{ color:var(--blue); }
+
+  nav.main-nav{ display:flex; gap:36px; }
+  nav.main-nav a{
+    font-size:15px; font-weight:400; color:var(--ink);
+    position:relative; padding:8px 2px;
+  }
+  nav.main-nav a.active{ color:var(--blue); font-weight:500; }
+  nav.main-nav a::after{
+    content:''; position:absolute; left:0; bottom:0; width:0%; height:2px;
+    background:var(--blue); transition:width .2s ease;
+  }
+  nav.main-nav a:hover::after, nav.main-nav a.active::after{ width:100%; }
+
+  .header-right{ display:flex; align-items:center; gap:20px; }
+  .search-box{
+    display:flex; align-items:center; gap:10px;
+    background:#fff; border:1.5px solid var(--blue); border-radius:10px;
+    padding:11px 16px; width:280px;
+    box-shadow:0 0 0 3px rgba(47,92,232,0.08);
+  }
+  .search-box input{
+    border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:14px; color:var(--ink); width:100%;
+  }
+  .search-box input::placeholder{ color:#a7adba; }
+  .search-box svg{ flex-shrink:0; color:#a7adba; }
+  .login-btn{ display:flex; align-items:center; gap:8px; font-size:14.5px; font-weight:500; color:var(--ink); }
+  .login-btn .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--blue-dark);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+  }
+
+  /* ===== Page content ===== */
+  .section{ padding:30px 0 70px; }
+
+  .badge{
+    display:inline-block;
+    background:var(--blue);
+    color:#fff;
+    font-size:12.5px;
+    font-weight:500;
+    padding:6px 16px;
+    border-radius:8px;
+    margin-bottom:20px;
+  }
+
+  .review-list{ display:flex; flex-direction:column; gap:18px; }
+
+  .review-card{
+    display:flex;
+    align-items:center;
+    gap:26px;
+    background:var(--card-bg);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px 26px;
+    box-shadow:var(--card-shadow);
+    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    color:inherit;
+    text-decoration:none;
+  }
+  .review-card:hover{
+    transform:translateY(-3px);
+    box-shadow:var(--card-shadow-hover);
+    color:inherit;
+  }
+  .review-card-img{
+    flex-shrink:0;
+    width:150px; height:110px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .review-card-img img{ width:100%; height:100%; object-fit:contain; }
+
+  .review-card-body{ flex:1; min-width:0; }
+  .review-card-body h3{
+    font-size:15px; font-weight:600; color:var(--ink); margin-bottom:8px;
+  }
+  .review-card-body .quote{
+    font-size:12.5px; color:var(--ink-muted); line-height:1.7; margin-bottom:6px;
+  }
+  .review-card-body .meta{
+    font-size:12px; color:var(--ink-muted); line-height:1.7;
+  }
+  .review-card-body .meta b{ color:var(--ink); font-weight:500; }
+
+  /* ===== Footer ===== */
+  footer{ background:#f7f9fd; border-top:1px solid var(--line); padding:44px 0 22px; }
+  .footer-bottom{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:12.5px; color:var(--ink-muted);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width:980px){
+    nav.main-nav{ display:none; }
+    .search-box{ width:190px; }
+  }
+  @media (max-width:640px){
+    .wrap{ padding:0 18px; }
+    .search-box{ display:none; }
+    .review-card{ flex-direction:column; text-align:center; }
+    .review-card-img{ width:120px; height:100px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <a href="Mainsite.html" class="logo">GEAR<span class="hub">HUB</span></a>
+    <nav class="main-nav">
+      <a href="Mainsite.html">หน้าแรก</a>
+      <a href="All Equipment.html">อุปกรณ์</a>
+      <a href="Recommend.html" class="active">รีวิว</a>
+      <a href="category.html">หมวดหมู่</a>
+    </nav>
+    <div class="header-right">
+      <div class="search-box">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="ค้นหาสินค้า...">
+      </div>
+      <a href="Login.html" class="login-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        เข้าสู่ระบบ
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+
+    <span class="badge">Recommend</span>
+
+    <div class="review-list" id="review-list"></div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-bottom">
+    <span>© 2026 GEARHUB. สงวนลิขสิทธิ์ทุกประการ</span>
+    <span>ออกแบบเพื่อเกมเมอร์ 🎮</span>
+  </div>
+</footer>
+
+<script>
+  /* ============================================================
+     ✏️ ใส่ข้อมูลรีวิวตรงนี้
+     ------------------------------------------------------------
+     name      = ชื่ออุปกรณ์
+     image     = พาธไฟล์รูปสินค้า
+     quote     = คำโปรยรีวิว (ใส่ "" ถ้าไม่มี)
+     pros      = ข้อดี (ใส่ "" ถ้าไม่มี)
+     cons      = ข้อเสีย (ใส่ "" ถ้าไม่มี)
+     ============================================================ */
+  const reviews = [
+    {
+      name: "LOGITECH G PRO X2 SUPERSTRIKE",
+      image: "Product/Product_x2.png",
+      link: "LOGITECH G PRO X2 SUPERSTRIKE.html",
+      quote: "เมาส์ไร้สายระดับแข่งขัน น้ำหนักเบาพิเศษ เซนเซอร์ HERO แม่นยำสูง สวิตช์ออปติคอลตอบสนองไวไม่มีดีเลย์ รองรับการใช้งานหนักต่อเนื่องได้ยาวนาน",
+      pros: "น้ำหนักเบา • เซนเซอร์แม่นยำ • แบตอึด",
+      cons: "ราคาสูง • ปุ่มด้านข้างน้อยกว่าบางรุ่น"
+    },
+    {
+      name: "RAZER VIPER V4 PRO",
+      image: "Product/Product_razerv4.png",
+      link: "RAZER VIPER V4 PRO.html",
+      quote: "เมาส์เรือธงไร้สายจาก Razer มาพร้อมสวิตช์ออปติคอลเจนใหม่และเซนเซอร์ความละเอียดสูง ให้การควบคุมที่แม่นยำและลื่นไหลในทุกจังหวะเกม",
+      pros: "ตอบสนองไวมาก • ทรงจับถนัดมือ • วัสดุคุณภาพสูง",
+      cons: "ราคาสูง • น้ำหนักมากกว่ารุ่นก่อนเล็กน้อย"
+    },
+    {
+      name: "SCYROX v6",
+      image: "Product/Product_scyroxv6.png",
+      link: "SCYROX V6.html",
+      quote: "เมาส์เกมมิ่งสายคุ้ม ดีไซน์เพรียวบาง น้ำหนักเบา ตอบสนองไวในราคาที่จับต้องได้ เหมาะสำหรับผู้เริ่มต้นสายแข่งขัน",
+      pros: "ราคาคุ้มค่า • น้ำหนักเบา • ทรงจับสบายมือ",
+      cons: "วัสดุยังไม่พรีเมียมเท่าตัวท็อป • ซอฟต์แวร์ปรับแต่งจำกัด"
+    },
+    {
+      name: "Endgame gear OP1w 4k v2",
+      image: "Product/Product_eggop1.png",
+      link: "Endgame gear op1w 4k v2.html",
+      quote: "เมาส์ไร้สายรองรับ Polling Rate 4000Hz ให้การตอบสนองเทียบเท่าเมาส์แบบมีสาย โครงสร้างเปลือกน้ำหนักเบาพร้อมสวิตช์คุณภาพสูง",
+      pros: "Polling Rate สูง • น้ำหนักเบามาก • วัสดุทนทาน",
+      cons: "ราคาสูง • ต้องใช้ตัวรับสัญญาณเฉพาะ"
+    },
+    {
+      name: "Wooting 60 He+",
+      image: "Product/Product_Wooting60.png",
+      link: "Wooting 60He+.html",
+      quote: "คีย์บอร์ดฮอลเอฟเฟกต์ระดับแข่งขัน ปรับจุดกดได้ละเอียดถึงระดับ 0.1 มม. รองรับ Rapid Trigger ทำให้กดซ้ำได้เร็วกว่าคีย์บอร์ดทั่วไป ตอบโจทย์เกมแนว FPS โดยเฉพาะ",
+      pros: "ปรับจุดกดได้อิสระ • Rapid Trigger แม่นยำสูง • ตัวเครื่องกะทัดรัด",
+      cons: "ราคาสูง • ต้องใช้ซอฟต์แวร์เฉพาะในการตั้งค่า"
+    },
+    {
+      name: "ATK EDGE 60 HE",
+      image: "Product/Product_ATKedge60.png",
+      link: "EDGE 60 HE.html",
+      quote: "คีย์บอร์ด 60% ระบบ Hall Effect ปรับจุดกดได้ละเอียด ตัวเครื่องกะทัดรัดพกพาง่าย เหมาะกับทั้งงานพิมพ์และเกมแข่งขัน",
+      pros: "ปรับจุดกดได้ • ขนาดกะทัดรัด • คีย์แคปคุณภาพดี",
+      cons: "ไม่มีปุ่มฟังก์ชันแยก • ต้องปรับตัวกับเลย์เอาต์ 60%"
+    },
+    {
+      name: "AULA F75",
+      image: "Product/Product_aulaf75.png",
+      link: "AULAF75.html",
+      quote: "คีย์บอร์ดกลไกดีไซน์สวย โครงสร้างแบบ Gasket Mount ให้สัมผัสการพิมพ์นุ่มนวล เสียงคลิกหนึบ เหมาะทั้งใช้งานทั่วไปและเล่นเกม",
+      pros: "ราคาคุ้มค่า • สัมผัสพิมพ์นุ่มนวล • ดีไซน์สวยงาม",
+      cons: "ไม่รองรับ Hot-swap ทุกรุ่น • ซอฟต์แวร์ยังไม่ครบครัน"
+    },
+    {
+      name: "RAZER HUNTSMAN V3 PRO",
+      image: "Product/Product_huntman.png",
+      link: "RAZERHUNTMAN.html",
+      quote: "คีย์บอร์ดเรือธงสวิตช์ออปติคอลอนาล็อก ปรับจุดกดได้อิสระในแต่ละปุ่ม ตอบสนองไวระดับมิลลิวินาที เหมาะกับเกมเมอร์สายแข่งขันตัวจริง",
+      pros: "ปรับจุดกดได้ทุกปุ่ม • ตอบสนองไวมาก • วัสดุพรีเมียม",
+      cons: "ราคาสูง • ตัวเครื่องหนักพอสมควร"
+    },
+    {
+      name: "Simgot EG280",
+      image: "Product/Product_Simgot280.png",
+      link: "#",
+      quote: "หูฟังอินเอียร์เสียงดี ตัวเรือนโลหะแกะสลักละเอียด ให้เสียงกลางแหลมใสชัด เบสมีมิติไม่กลบเสียงร้อง เหมาะทั้งฟังเพลงและเล่นเกมที่ต้องฟังทิศทางเสียง",
+      pros: "ตัวเรือนแข็งแรง • เสียงกลางแหลมใส • สวมใส่สบายนาน",
+      cons: "สายหูฟังค่อนข้างแข็ง • ไม่มีไมค์ในตัว"
+    },
+    {
+      name: "HyperX CLOUD III",
+      image: "Product/Product_HyperC3.png",
+      link: "Hyper3.html",
+      quote: "หูฟังครอบหูสวมใส่สบายยาวนาน โฟมเมมโมรี่นุ่มสบายหู เสียงรอบทิศทางชัดเจนด้วยเทคโนโลยี DTS Spatial Audio เหมาะกับการเล่นเกมยาวๆ",
+      pros: "สวมใส่สบาย • เสียงรอบทิศทางชัด • ไมค์คุณภาพดี",
+      cons: "ตัวเครื่องค่อนข้างใหญ่ • ไม่พับเก็บ"
+    },
+    {
+      name: "RAZER HAMMERHEAD V3",
+      image: "Product/Product_hammer.png",
+      link: "RAZERHAMMERHEAD.html",
+      quote: "หูฟังอินเอียร์แบบมีสาย ดีไซน์เพรียวบางพกพาง่าย ให้เสียงแหลมกลางคมชัด เหมาะกับการเล่นเกมมือถือและพีซีทั่วไป",
+      pros: "พกพาสะดวก • เสียงคมชัด • ราคาย่อมเยา",
+      cons: "ไม่มีระบบตัดเสียงรบกวน • สายค่อนข้างบาง"
+    },
+    {
+      name: "LOGITECH G333 BUFFY",
+      image: "Product/Product_G333.png",
+      link: "LOGI333.html",
+      quote: "หูฟังอินเอียร์แบบมีสายพร้อมไมโครโฟนในตัว เสียงเบสหนักแน่น เหมาะกับการฟังเพลงและเล่นเกมที่ต้องการเสียงกระแทกชัดเจน",
+      pros: "เบสหนักแน่น • มีไมค์ในตัว • ราคาคุ้มค่า",
+      cons: "เสียงแหลมไม่โดดเด่นเท่าตัวท็อป • สายพันกันง่าย"
+    },
+    {
+      name: "ZOWIE XL2566X+ 400Hz",
+      image: "Product/Product_XL2566X+.webp",
+      link: "XL2566X+.html",
+      quote: "จอมอนิเตอร์เพื่อการแข่งขันระดับสูงสุด รีเฟรชเรต 400Hz พร้อมเทคโนโลยี DyAc2 ลดภาพเบลอขณะเคลื่อนไหวเร็ว ให้ภาพคมชัดทุกเฟรม",
+      pros: "รีเฟรชเรตสูงมาก • ภาพลื่นไม่มีเบลอ • ปรับแต่งสีได้แม่นยำ",
+      cons: "ราคาสูงมาก • ความละเอียดยังเป็น Full HD"
+    },
+    {
+      name: "Samsung Odyssey G5",
+      image: "Product/Product_SSg5.webp",
+      link: "OdysseyG5.html",
+      quote: "จอมอนิเตอร์จอโค้งเพื่อเกมมิ่ง ให้มุมมองภาพกว้างสมจริง สีสันสดใสด้วยเทคโนโลยี VA Panel เหมาะกับเกมแนวเปิดโลกและแข่งขัน",
+      pros: "จอโค้งสมจริง • สีสันสดใส • ราคาคุ้มค่า",
+      cons: "มุมมองด้านข้างแคบกว่า IPS • เวลาตอบสนองยังไม่สูงสุด"
+    },
+    {
+      name: "VIEWSONIC VX2479A 240Hz",
+      image: "Product/Product_Viewsonic.png",
+      link: "Viewsonic.html",
+      quote: "จอมอนิเตอร์ IPS รีเฟรชเรต 240Hz ให้สีสันแม่นยำและมุมมองกว้าง เหมาะกับทั้งงานกราฟิกและเกมที่ต้องการความเร็วสูง",
+      pros: "รีเฟรชเรตสูง • สีสันแม่นยำ • มุมมองกว้าง",
+      cons: "ไม่มีขาตั้งปรับความสูง • ลำโพงในตัวเสียงเบา"
+    },
+    {
+      name: "LG ULTRAGEAR 25G523B",
+      image: "Product/Product_Lg200.png",
+      link: "LGUTG.html",
+      quote: "จอมอนิเตอร์เพื่อการแข่งขัน หน้าจอ IPS ให้สีสันคมชัด รีเฟรชเรตสูงตอบสนองไว เหมาะกับเกมเมอร์สาย FPS ที่ต้องการความได้เปรียบ",
+      pros: "ตอบสนองไว • สีสันคมชัด • ขนาดกะทัดรัดเหมาะโต๊ะเล็ก",
+      cons: "ความละเอียด Full HD • ขาตั้งปรับระดับได้จำกัด"
+    }
+  ];
+  /* ============================================================
+     จบส่วนข้อมูลรีวิว — โค้ดด้านล่างไม่ต้องแก้
+     ============================================================ */
+
+  const list = document.getElementById('review-list');
+  list.innerHTML = reviews.map(r => `
+    <a href="${r.link}" class="review-card" style="cursor: pointer;">
+      <div class="review-card-img">
+        <img src="${r.image}" alt="${r.name}">
+      </div>
+      <div class="review-card-body">
+        <h3>${r.name}</h3>
+        ${r.quote ? `<div class="quote">"${r.quote}"</div>` : ``}
+        ${(r.pros || r.cons) ? `<div class="meta">${r.pros ? `<b>ข้อดี:</b> ${r.pros}` : ``}${(r.pros && r.cons) ? ` &nbsp;•&nbsp; ` : ``}${r.cons ? `<b>ข้อเสีย:</b> ${r.cons}` : ``}</div>` : ``}
+      </div>
+    </a>
+  `).join('');
+</script>
+
+</body>
+</html>

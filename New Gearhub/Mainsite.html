@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEARHUB — อุปกรณ์เกมมิ่งเกียร์สำหรับเกมเมอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page-bg:#ffffff;
+    --ink:#0f1729;
+    --ink-muted:#667085;
+    --line:#e7eaf1;
+    --card-bg:#ffffff;
+    --card-shadow: 0 2px 10px rgba(16,24,57,0.06);
+    --card-shadow-hover: 0 14px 30px rgba(16,24,57,0.12);
+    --blue:#2f5ce8;
+    --blue-dark:#1c3fb3;
+    --cyan:#3ee3ff;
+    --navy:#0a1330;
+    --navy-2:#101d47;
+    --radius:16px;
+    --maxw:1240px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--page-bg);
+    color:var(--ink);
+    font-family:'Kanit', sans-serif;
+    font-weight:300;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+  ul{ list-style:none; }
+  button{ font-family:inherit; cursor:pointer; border:none; background:none; }
+  img,svg{ display:block; }
+
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 32px; }
+
+  /* ===== Header ===== */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{ display:flex; align-items:center; justify-content:space-between; height:78px; }
+  .logo{
+    font-weight:700; font-size:21px; letter-spacing:0.3px; color:var(--ink);
+  }
+  .logo span.hub{ color:var(--blue); }
+
+  nav.main-nav{ display:flex; gap:36px; }
+  nav.main-nav a{
+    font-size:15px; font-weight:400; color:var(--ink);
+    position:relative; padding:8px 2px;
+  }
+  nav.main-nav a::after{
+    content:''; position:absolute; left:0; bottom:0; width:0%; height:2px;
+    background:var(--blue); transition:width .2s ease;
+  }
+  nav.main-nav a:hover::after{ width:100%; }
+
+  .header-right{ display:flex; align-items:center; gap:20px; }
+
+  .search-box{
+    display:flex; align-items:center; gap:10px;
+    background:#fff;
+    border:1.5px solid var(--blue);
+    border-radius:10px;
+    padding:11px 16px;
+    width:300px;
+    box-shadow:0 0 0 3px rgba(47,92,232,0.08);
+  }
+  .search-box input{
+    border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:14px; color:var(--ink); width:100%;
+  }
+  .search-box input::placeholder{ color:#a7adba; }
+  .search-box svg{ flex-shrink:0; color:#a7adba; }
+
+  .login-btn{
+    display:flex; align-items:center; gap:8px;
+    font-size:14.5px; font-weight:500; color:var(--ink);
+  }
+
+  /* ===== Hero ===== */
+  .hero-section{ padding:28px 0 64px; }
+  .hero{
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    padding:64px 56px;
+    min-height:420px;
+    display:flex;
+    align-items:center;
+  }
+  .hero-bg-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    z-index:0;
+  }
+  .hero::before{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(90deg, rgba(6,10,26,0.88) 0%, rgba(6,10,26,0.55) 45%, rgba(6,10,26,0.15) 75%);
+    z-index:1;
+  }
+  .hero-inner{
+    display:grid;
+    grid-template-columns:1fr;
+    max-width:520px;
+    gap:32px;
+    align-items:center;
+    position:relative; z-index:2;
+  }
+  .hero-visual{ display:none; }
+  .hero-eyebrow{
+    display:none;
+  }
+  .hero h1{
+    font-weight:400;
+    font-size:28px;
+    color:#c4cbe0;
+    line-height:1.3;
+  }
+  .hero h1 .big{
+    display:block;
+    font-weight:700;
+    font-size:clamp(38px, 4.6vw, 60px);
+    color:#ffffff;
+    line-height:1.1;
+    margin-top:6px;
+    text-shadow:0 0 30px rgba(62,227,255,0.25);
+  }
+  .cta-row{ margin-top:30px; }
+  .btn-primary{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--blue);
+    color:#fff; font-size:15px; font-weight:500;
+    padding:15px 26px; border-radius:10px;
+    box-shadow:0 10px 24px rgba(47,92,232,0.4);
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); background:var(--blue-dark); box-shadow:0 14px 30px rgba(47,92,232,0.5); }
+  .btn-primary svg{ transition:transform .2s ease; }
+  .btn-primary:hover svg{ transform:translateX(4px); }
+
+
+
+  /* ===== Section heading ===== */
+  .section{ padding:56px 0 76px; }
+  .section-title{
+    font-size:14px; font-weight:600; letter-spacing:2px;
+    color:var(--ink); text-transform:uppercase;
+    margin-bottom:28px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-title::before{
+    content:''; width:5px; height:22px; border-radius:3px;
+    background:var(--blue);
+  }
+
+  /* ===== Product grid ===== */
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 20px 20px;
+    box-shadow:var(--card-shadow);
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .card:hover{
+    transform:translateY(-5px);
+    box-shadow:var(--card-shadow-hover);
+    border-color:#d6ddf5;
+  }
+  .card-img{
+    height:130px;
+    background:linear-gradient(160deg, #f4f6fb, #eaeef8);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+  }
+  .card-img svg{ width:78%; height:78%; }
+
+  .card h3{ font-size:15.5px; font-weight:500; margin-bottom:8px; line-height:1.4; color:var(--ink); }
+  .card p.desc{
+    font-size:12.5px; color:var(--ink-muted); line-height:1.7;
+    margin-bottom:16px; min-height:44px;
+  }
+  .price-row{
+    display:flex; align-items:center; justify-content:space-between;
+    border-top:1px solid var(--line); padding-top:14px;
+  }
+  .price{ font-size:16px; font-weight:600; color:var(--blue); }
+  .price .thb{ font-size:12px; color:var(--ink-muted); margin-right:2px; font-weight:400; }
+  .detail-link{
+    font-size:12px; color:var(--ink-muted);
+    display:flex; align-items:center; gap:4px;
+    transition:color .2s ease;
+  }
+  .card:hover .detail-link{ color:var(--blue); }
+
+  /* ===== Perks strip ===== */
+  .perks{ background:#f7f9fd; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .perks .wrap{ display:grid; grid-template-columns:repeat(4,1fr); padding:34px 32px; }
+  .perk{ display:flex; align-items:center; gap:14px; }
+  .perk-icon{
+    width:44px; height:44px; border-radius:10px;
+    background:#ffffff; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--blue); flex-shrink:0;
+  }
+  .perk h4{ font-size:14px; font-weight:500; margin-bottom:3px; color:var(--ink); }
+  .perk p{ font-size:12px; color:var(--ink-muted); }
+
+  /* ===== Footer ===== */
+  footer{ background:#f7f9fd; padding:52px 0 24px; }
+  .footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:32px; padding-bottom:36px; }
+  .footer-grid h5{ font-size:13px; letter-spacing:0.5px; color:var(--ink); margin-bottom:16px; font-weight:600; }
+  .footer-grid p{ font-size:13px; color:var(--ink-muted); line-height:1.8; max-width:280px; }
+  .footer-grid ul li{ margin-bottom:10px; }
+  .footer-grid ul li a{ font-size:13px; color:var(--ink-muted); transition:color .2s; }
+  .footer-grid ul li a:hover{ color:var(--blue); }
+  .footer-bottom{
+    border-top:1px solid var(--line); padding-top:20px;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:12.5px; color:var(--ink-muted);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width:980px){
+    nav.main-nav{ display:none; }
+    .search-box{ width:190px; }
+    .hero{ padding:44px 28px; }
+    .hero-inner{ grid-template-columns:1fr; }
+    .grid{ grid-template-columns:repeat(2,1fr); }
+    .perks .wrap{ grid-template-columns:repeat(2,1fr); gap:22px; }
+    .footer-grid{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:560px){
+    .wrap{ padding:0 18px; }
+    .grid{ grid-template-columns:1fr; }
+    .search-box{ display:none; }
+    .footer-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <a href="Mainsite.html" class="logo">GEAR<span class="hub">HUB</span></a>
+    <nav class="main-nav">
+      <a href="Mainsite.html"class="active">หน้าแรก</a>
+      <a href="All Equipment.html">อุปกรณ์</a>
+      <a href="Recommend.html">รีวิว</a>
+      <a href="category.html">หมวดหมู่</a>
+    </nav>
+    <div class="header-right">
+      <div class="search-box">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="ค้นหาสินค้า...">
+      </div>
+      <a href="Login.html" class="login-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        เข้าสู่ระบบ
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="hero-section">
+  <div class="wrap">
+    <div class="hero">
+      <img src="Blackground/Banner Main.png" alt="ห้องเกมมิ่งพร้อมไฟ RGB" class="hero-bg-img">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <h1>อุปกรณ์เกมมิ่งเกียร์<span class="big">สำหรับเกมเมอร์</span></h1>
+          <div class="cta-row">
+            <a href="#products" class="btn-primary">
+              เลือกดูอุปกรณ์ทั้งหมด
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="products">
+  <div class="wrap">
+    <div class="section-title">POPULAR</div>
+
+    <div class="grid">
+
+      <a class="card" href="LOGITECH G PRO X2 SUPERSTRIKE.html">
+        <div class="card-img">
+         <img src="GamingGear/Mouse/Superstrike.png" alt="Logitech x2 Superstrike" width="170" height="170">
+        </div>
+        <h3>Logitech G PRO X2 SUPERSTRIKE</h3>
+        <p class="desc">เมาส์เกมมิ่งไร้สายน้ำหนักเบา เซนเซอร์ความแม่นยำสูง ตอบสนองไว เหมาะสำหรับเกม FPS</p>
+        <div class="price-row">
+          <div class="price"><span class="thb">฿</span>6,990</div>
+          <span class="detail-link">ดูรายละเอียดเพิ่มเติม
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a class="card" href="wooting 60He+.html">
+        <div class="card-img">
+          <img src="GamingGear/Keyboard/Wooting 60HE+.png" alt="Wooting60He+" width="205" height="170">
+        </div>
+        <h3>Wooting 60HE+</h3>
+        <p class="desc">คีย์บอร์ดแม่เหล็ก 60% ที่ปรับแต่งความไวได้ ตอบสนองเร็วกว่าคีย์บอร์ดทั่วไป เหมาะกับเกมแข่งขัน</p>
+        <div class="price-row">
+          <div class="price"><span class="thb">฿</span>8,990</div>
+          <span class="detail-link">ดูรายละเอียดเพิ่มเติม
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a class="card" href="Simgot.html">
+        <div class="card-img">
+          <img src="GamingGear/Headphone/Simgot Eg280.png" alt="SimgotEG280" width="130" height="130">
+        </div>
+        <h3>Simgot EG280</h3>
+        <p class="desc">หูฟัง In-Ear 2 ไดรเวอร์ TDD+Planar ให้เสียงรายละเอียดคมชัดและเบสกระชับ เสียงระดับ Hi-Fi</p>
+        <div class="price-row">
+          <div class="price"><span class="thb">฿</span>1,990</div>
+          <span class="detail-link">ดูรายละเอียดเพิ่มเติม
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a class="card" href="XL2566X+.html">
+        <div class="card-img">
+          <img src="GamingGear/Monitor/zowie xl2586x.webp" alt="zowie400hz" width="175" height="170">
+        </div>
+        <h3>ZOWIE XL2566X+</h3>
+        <p class="desc">จอมอนิเตอร์เกมมิ่ง TN DyAc 2 24.1 นิ้ว รีเฟรชเรต 400Hz ภาพลื่นไหล ไร้ภาพเบลอ</p>
+        <div class="price-row">
+          <div class="price"><span class="thb">฿</span>21,490</div>
+          <span class="detail-link">ดูรายละเอียดเพิ่มเติม
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="margin-bottom:14px;">GEAR<span class="hub">HUB</span></div>
+        <p>ร้านอุปกรณ์เกมมิ่งเกียร์ครบวงจร คัดสรรสินค้าคุณภาพสูงจากแบรนด์ชั้นนำทั่วโลก เพื่อเกมเมอร์ทุกคน</p>
+      </div>
+      <div>
+        <h5>หมวดหมู่</h5>
+        <ul>
+          <li><a href="MousePage.html">เมาส์เกมมิ่ง</a></li>
+          <li><a href="KeyboardPage.html">คีย์บอร์ด</a></li>
+          <li><a href="HeadphonePage.html">หูฟัง</a></li>
+          <li><a href="MonitorPage.html">จอมอนิเตอร์</a></li>
+        </ul>
+      </div>
+    <div class="footer-bottom">
+      <span>© 2026 GEARHUB. สงวนลิขสิทธิ์ทุกประการ</span>
+      <span>ออกแบบเพื่อเกมเมอร์ 🎮</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

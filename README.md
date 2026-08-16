@@ -1,0 +1,50 @@
+# GEARHUB — ระบบสมัครสมาชิก / เข้าสู่ระบบ
+
+โปรเจกต์นี้เพิ่มเซิร์ฟเวอร์ Node.js (Express) เข้าไปในเว็บ GEARHUB เดิม
+เพื่อเชื่อมต่อฐานข้อมูล Neon (PostgreSQL) และทำระบบสมัครสมาชิก/เข้าสู่ระบบจริง
+
+## โครงสร้าง
+- `server.js` — เซิร์ฟเวอร์หลัก มี API: `/api/register`, `/api/login`, `/api/me`, `/api/logout`, `/api/users`
+- `New Gearhub/` — ไฟล์หน้าเว็บเดิมทั้งหมด (เสิร์ฟเป็น static ไฟล์)
+- `schema.sql` — คำสั่งสร้างตาราง `users` บน Neon
+- `.env.example` — ตัวอย่างตัวแปรที่ต้องตั้งค่า
+
+## 1) ตั้งค่า Neon
+1. สมัคร/ล็อกอินที่ https://neon.tech แล้วสร้างโปรเจกต์ใหม่
+2. ไปที่ SQL editor ของ Neon แล้วรันคำสั่งในไฟล์ `schema.sql`
+3. ไปที่ Connection Details คัดลอก connection string (ขึ้นต้นด้วย `postgres://...?sslmode=require`)
+
+## 2) รันบนเครื่องตัวเอง (VS Code)
+```bash
+npm install
+cp .env.example .env
+# แก้ .env ใส่ DATABASE_URL จาก Neon และตั้ง JWT_SECRET เป็นข้อความสุ่มยาวๆ
+npm run dev
+```
+เปิด http://localhost:3000/Login.html และ http://localhost:3000/register.html ทดสอบสมัคร/เข้าสู่ระบบ
+แล้วเช็คว่าแถวใหม่เข้าไปอยู่ในตาราง `users` บน Neon dashboard จริง
+
+## 3) ขึ้น GitHub
+```bash
+git init
+git add .
+git commit -m "init: gearhub with login/register backend"
+git branch -M main
+git remote add origin <URL ของ repo บน GitHub>
+git push -u origin main
+```
+`.env` จะไม่ถูก push ขึ้นไป (มี `.gitignore` กันไว้แล้ว) — ต้องตั้งค่าตัวแปรแยกบน Render
+
+## 4) Deploy บน Render
+1. เข้า https://render.com → New → Web Service → เชื่อม repo GitHub นี้
+2. Build Command: `npm install`
+3. Start Command: `node server.js`
+4. ไปที่แท็บ Environment เพิ่มตัวแปร:
+   - `DATABASE_URL` = connection string จาก Neon
+   - `JWT_SECRET` = ค่าเดียวกับที่ตั้งในเครื่อง (หรือค่าใหม่ก็ได้)
+5. กด Deploy รอจนสถานะ Live แล้วเปิด URL ที่ Render ให้มา ทดสอบ `/Login.html` และ `/register.html`
+
+## หมายเหตุ
+- รหัสผ่านถูกแฮชด้วย bcrypt ก่อนเก็บลงฐานข้อมูล ไม่เก็บ plain text
+- การเข้าสู่ระบบใช้ JWT เก็บใน httpOnly cookie ชื่อ `gearhub_token`
+- `/api/users` ใช้ดูรายชื่อสมาชิกทั้งหมด (ต้องล็อกอินก่อนถึงจะเรียกได้) — ถ้าจะทำหน้าแอดมินจริง ควรเพิ่มระบบสิทธิ์ (role) แยกอีกชั้น
