@@ -34,6 +34,17 @@
 
       const { user } = await res.json();
 
+      if (user.role === 'admin') {
+        const nav = document.querySelector('.main-nav');
+        if (nav && !nav.querySelector('[data-admin-link]')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = 'admin.html';
+          adminLink.textContent = 'จัดการสมาชิก';
+          adminLink.setAttribute('data-admin-link', '1');
+          nav.appendChild(adminLink);
+        }
+      }
+
       const wrap = document.createElement('div');
       wrap.className = 'user-menu';
       wrap.innerHTML = `
