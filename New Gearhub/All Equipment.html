@@ -199,7 +199,7 @@
   <div class="wrap">
 
     <div class="filter-bar">
-      <div class="result-count">พบ 16 รายการ</div>
+      <div class="result-count" id="resultCount">พบ 16 รายการ</div>
     </div>
 
     <div class="grid" id="product-grid"></div>
@@ -262,7 +262,25 @@
      ============================================================ */
 
   const grid = document.getElementById('product-grid');
-  grid.innerHTML = products.map(p => `
+  const resultCount = document.getElementById('resultCount');
+
+  // ---- อ่านคำค้นจาก URL (?q=...) ที่มาจากช่องค้นหาบน header ----
+  const query = new URLSearchParams(window.location.search).get('q') || '';
+  const filtered = query
+    ? products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
+    : products;
+
+  if (query) {
+    document.querySelector('.page-title-bar h1').textContent = `ผลการค้นหา: "${query}"`;
+    const headerInput = document.querySelector('.search-box input');
+    if (headerInput) headerInput.value = query;
+  }
+
+  resultCount.textContent = filtered.length > 0
+    ? `พบ ${filtered.length} รายการ`
+    : `ไม่พบสินค้าที่ตรงกับ "${query}"`;
+
+  grid.innerHTML = filtered.map(p => `
     <a class="p-card" href="${p.link}">
       <div class="p-card-img">
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : mouseSVG}

@@ -25,6 +25,18 @@
   document.head.appendChild(style);
 
   document.addEventListener('DOMContentLoaded', async () => {
+    // ---- ช่องค้นหาสินค้าบน header: กด Enter แล้วไปหน้า All Equipment พร้อมคำค้น ----
+    const searchInput = document.querySelector('.search-box input');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const q = searchInput.value.trim();
+          if (!q) return;
+          window.location.href = 'All Equipment.html?q=' + encodeURIComponent(q);
+        }
+      });
+    }
+
     const loginBtn = document.querySelector('.login-btn');
     if (!loginBtn) return;
 
