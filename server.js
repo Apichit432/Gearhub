@@ -28,9 +28,11 @@ app.use(express.static(STATIC_DIR));
 
 // ---------- Helpers ----------
 function setAuthCookie(res, user) {
-  const token = jwt.sign({ id: user.id, name: user.name, email: user.email }, JWT_SECRET, {
-    expiresIn: '7d',
-  });
+  const token = jwt.sign(
+    { id: user.id, name: user.name, email: user.email, role: user.role || 'member' },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
   res.cookie('gearhub_token', token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -50,6 +52,13 @@ function authMiddleware(req, res, next) {
   }
 }
 
+function adminMiddleware(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'ต้องเป็นแอดมินเท่านั้นถึงเข้าถึงส่วนนี้ได้' });
+  }
+  next();
+}
+
 // ---------- API: สมัครสมาชิก ----------
 app.post('/api/register', async (req, res) => {
   try {
@@ -66,7 +75,7 @@ app.post('/api/register', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, role, created_at',
       [name.trim(), email.toLowerCase(), passwordHash]
     );
 
@@ -86,7 +95,7 @@ app.post('/api/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'กรุณากรอกอีเมลและรหัสผ่าน' });
 
     const result = await pool.query(
-      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash, role FROM users WHERE email = $1',
       [email.toLowerCase().trim()]
     );
     const user = result.rows[0];
@@ -96,7 +105,7 @@ app.post('/api/login', async (req, res) => {
     if (!match) return res.status(401).json({ error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
     setAuthCookie(res, user);
-    res.json({ user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์ กรุณาลองใหม่' });
@@ -114,9 +123,11 @@ app.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- API: รายชื่อสมาชิกทั้งหมด (ตัวอย่างสำหรับแอดมิน) ----------
-app.get('/api/users', authMiddleware, async (req, res) => {
-  const result = await pool.query('SELECT id, name, email, created_at FROM users ORDER BY created_at DESC');
+// ---------- API: รายชื่อสมาชิกทั้งหมด (เฉพาะแอดมิน) ----------
+app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
+  const result = await pool.query(
+    'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
+  );
   res.json({ users: result.rows });
 });
 

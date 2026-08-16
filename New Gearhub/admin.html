@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แดชบอร์ดแอดมิน — GEARHUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#12131a; --blue:#2f5bff; --bg:#f4f5f8; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; font-family:'Kanit',sans-serif; background:var(--bg); color:var(--ink);
+  }
+  header{
+    background:#fff; border-bottom:1px solid #e7e8ec; padding:18px 32px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .logo{ font-weight:700; font-size:20px; text-decoration:none; color:var(--ink); }
+  .logo .hub{ color:var(--blue); }
+  .header-right{ display:flex; align-items:center; gap:16px; font-size:14px; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:32px 24px; }
+  h1{ font-size:22px; margin:0 0 4px; }
+  .sub{ color:#6b7280; font-size:14px; margin:0 0 24px; }
+  .card{ background:#fff; border-radius:16px; padding:8px; box-shadow:0 4px 20px rgba(0,0,0,.04); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  th, td{ text-align:left; padding:14px 16px; }
+  thead th{ color:#6b7280; font-weight:500; font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; border-bottom:1px solid #eef0f3; }
+  tbody tr{ border-bottom:1px solid #f2f3f5; }
+  tbody tr:last-child{ border-bottom:none; }
+  .badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:500; }
+  .badge-admin{ background:#fde8e8; color:#c0392b; }
+  .badge-member{ background:#e8f0fe; color:#2f5bff; }
+  .state-box{ text-align:center; padding:60px 20px; color:#6b7280; }
+  .state-box a{ color:var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="Mainsite.html" class="logo">GEAR<span class="hub">HUB</span></a>
+  <div class="header-right" id="headerRight"></div>
+</header>
+
+<div class="wrap">
+  <h1>รายชื่อสมาชิกทั้งหมด</h1>
+  <p class="sub" id="subText">กำลังโหลดข้อมูล...</p>
+  <div class="card">
+    <table id="usersTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ชื่อ-นามสกุล</th>
+          <th>อีเมล</th>
+          <th>สิทธิ์</th>
+          <th>วันที่สมัคร</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+    <div class="state-box" id="stateBox"></div>
+  </div>
+</div>
+
+<script>
+  const stateBox = document.getElementById('stateBox');
+  const table = document.getElementById('usersTable');
+  const subText = document.getElementById('subText');
+  const headerRight = document.getElementById('headerRight');
+
+  function fmtDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  async function init(){
+    // เช็คสิทธิ์ก่อน
+    let me;
+    try {
+      const meRes = await fetch('/api/me', { credentials: 'include' });
+      if (!meRes.ok) {
+        stateBox.innerHTML = 'กรุณา <a href="Login.html">เข้าสู่ระบบ</a> ก่อนใช้งานหน้านี้';
+        subText.textContent = '';
+        return;
+      }
+      me = (await meRes.json()).user;
+      headerRight.textContent = me.name + ' (แอดมิน)';
+    } catch {
+      stateBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+      return;
+    }
+
+    // ดึงรายชื่อสมาชิก (เฉพาะแอดมิน — เซิร์ฟเวอร์เช็คซ้ำอีกชั้นเสมอ)
+    try {
+      const res = await fetch('/api/users', { credentials: 'include' });
+      if (res.status === 403) {
+        stateBox.textContent = 'บัญชีนี้ไม่ใช่แอดมิน จึงดูรายชื่อสมาชิกไม่ได้';
+        subText.textContent = '';
+        return;
+      }
+      if (!res.ok) {
+        stateBox.textContent = 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่';
+        return;
+      }
+      const { users } = await res.json();
+      subText.textContent = `ทั้งหมด ${users.length} บัญชี`;
+
+      const body = document.getElementById('usersBody');
+      body.innerHTML = users.map((u, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-member'}">${u.role === 'admin' ? 'แอดมิน' : 'สมาชิก'}</span></td>
+          <td>${fmtDate(u.created_at)}</td>
+        </tr>
+      `).join('');
+
+      stateBox.style.display = 'none';
+      table.style.display = 'table';
+    } catch {
+      stateBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
