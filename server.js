@@ -208,6 +208,21 @@ app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
   res.json({ users: result.rows });
 });
 
+// ---------- API: ลบสมาชิก (เฉพาะแอดมิน) ----------
+app.delete('/api/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id' });
+
+  // กันไม่ให้แอดมินลบบัญชีตัวเองพลาด (เผื่อเหลือแอดมินคนเดียวจะได้ไม่ล็อกตัวเองออกจากระบบ)
+  if (id === req.user.id) {
+    return res.status(400).json({ error: 'ไม่สามารถลบบัญชีของตัวเองได้' });
+  }
+
+  const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
+  if (result.rowCount === 0) return res.status(404).json({ error: 'ไม่พบสมาชิกนี้ในระบบ' });
+  res.json({ deleted: true });
+});
+
 migrate()
   .then(() => {
     app.listen(PORT, () => {

@@ -40,6 +40,12 @@
   .status-offline{ color:#9ca3af; }
   .status-offline .status-dot{ background:#cbd5e1; }
   .last-seen{ display:block; font-size:12px; color:#9ca3af; margin-top:2px; }
+  .subtle{ color:#9ca3af; }
+  .danger-btn{
+    padding:7px 14px; border-radius:8px; border:1px solid #fecaca; background:#fef2f2;
+    color:#c0392b; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;
+  }
+  .danger-btn:hover{ background:#fee2e2; }
 </style>
 </head>
 <body>
@@ -62,6 +68,7 @@
           <th>สิทธิ์</th>
           <th>สถานะ</th>
           <th>วันที่สมัคร</th>
+          <th>จัดการ</th>
         </tr>
       </thead>
       <tbody id="usersBody"></tbody>
@@ -94,6 +101,7 @@
   }
 
   let refreshTimer = null;
+  let currentUserId = null;
 
   function renderUsers(users){
     const onlineCount = users.filter(u => u.online).length;
@@ -111,6 +119,11 @@
           <span class="last-seen">${u.online ? 'กำลังใช้งานอยู่' : fmtLastSeen(u.last_seen_at)}</span>
         </td>
         <td>${fmtDate(u.created_at)}</td>
+        <td>
+          ${u.id === currentUserId
+            ? '<span class="subtle" style="font-size:12.5px;">(บัญชีตัวเอง)</span>'
+            : `<button type="button" class="danger-btn" onclick="deleteUser(${u.id}, '${u.name.replace(/'/g, "\\'")}')">ลบ</button>`}
+        </td>
       </tr>
     `).join('');
   }
@@ -136,6 +149,22 @@
     }
   }
 
+  // ลบสมาชิกออกจากระบบ (เรียกจากปุ่ม "ลบ" ในตาราง)
+  async function deleteUser(id, name){
+    if (!confirm(`ยืนยันลบสมาชิก "${name}" ออกจากระบบ?\nการลบนี้ไม่สามารถกู้คืนได้`)) return;
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'ลบสมาชิกไม่สำเร็จ');
+        return;
+      }
+      await loadUsers();
+    } catch {
+      alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง');
+    }
+  }
+
   async function init(){
     // เช็คสิทธิ์ก่อน
     let me;
@@ -147,6 +176,7 @@
         return;
       }
       me = (await meRes.json()).user;
+      currentUserId = me.id;
       headerRight.textContent = me.name + ' (แอดมิน)';
     } catch {
       stateBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
