@@ -10,6 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// ถือว่า "ออนไลน์" ถ้ามี heartbeat เข้ามาภายในช่วงเวลานี้ ไม่งั้นแม้ is_online จะยังเป็น true
+// (เช่น ปิดแท็บไปเลยโดยไม่ได้กดออกจากระบบ) หน้าแอดมินก็จะขึ้นว่าออฟไลน์ให้อัตโนมัติ
+const ONLINE_THRESHOLD_SECONDS = 90;
+
 if (!process.env.DATABASE_URL) {
   console.error('Missing DATABASE_URL in .env — copy .env.example to .env and fill it in.');
 }
@@ -24,6 +28,45 @@ app.use(cookieParser());
 
 // เสิร์ฟไฟล์หน้าเว็บ static ทั้งหมดจากโฟลเดอร์ "New Gearhub"
 const STATIC_DIR = path.join(__dirname, 'New Gearhub');
+
+// ---------- ด่านตรวจก่อนเข้าเว็บ: ต้องล็อกอิน/สมัครสมาชิกก่อนถึงจะดูหน้าเว็บอื่นได้ ----------
+// หน้าเพจ (.html) ที่เข้าได้โดยไม่ต้องล็อกอิน มีแค่หน้าเข้าสู่ระบบกับสมัครสมาชิก
+const PUBLIC_PAGES = new Set(['login.html', 'register.html']);
+
+function getVerifiedUser(req) {
+  const token = req.cookies?.gearhub_token;
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+app.get('/', (req, res) => {
+  const user = getVerifiedUser(req);
+  res.redirect(user ? '/Mainsite.html' : '/Login.html');
+});
+
+function pageGate(req, res, next) {
+  let decodedPath;
+  try { decodedPath = decodeURIComponent(req.path); } catch { decodedPath = req.path; }
+
+  const ext = path.extname(decodedPath).toLowerCase();
+  // ไม่ใช่ไฟล์หน้าเว็บ (รูปภาพ/ฟอนต์/ไฟล์ .js ฯลฯ) ปล่อยผ่านตามปกติ — หน้า login/register เองก็ต้องโหลดไฟล์พวกนี้ได้
+  if (ext !== '.html') return next();
+
+  const base = path.basename(decodedPath).toLowerCase();
+  if (PUBLIC_PAGES.has(base)) return next();
+
+  const user = getVerifiedUser(req);
+  if (!user) return res.redirect('/Login.html');
+
+  req.gearhubUser = user;
+  next();
+}
+
+app.use(pageGate);
 app.use(express.static(STATIC_DIR));
 
 // ---------- Helpers ----------
@@ -59,6 +102,25 @@ function adminMiddleware(req, res, next) {
   next();
 }
 
+// ---------- เตรียม/อัปเดตโครงตาราง (เผื่อฐานข้อมูลเก่ายังไม่มีคอลัมน์สถานะออนไลน์) ----------
+async function migrate() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            SERIAL PRIMARY KEY,
+      name          VARCHAR(150) NOT NULL,
+      email         VARCHAR(255) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role          VARCHAR(20) NOT NULL DEFAULT 'member',
+      is_online     BOOLEAN NOT NULL DEFAULT false,
+      last_seen_at  TIMESTAMPTZ,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'member'`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN NOT NULL DEFAULT false`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ`);
+}
+
 // ---------- API: สมัครสมาชิก ----------
 app.post('/api/register', async (req, res) => {
   try {
@@ -80,6 +142,7 @@ app.post('/api/register', async (req, res) => {
     );
 
     const user = result.rows[0];
+    await pool.query('UPDATE users SET is_online = true, last_seen_at = NOW() WHERE id = $1', [user.id]);
     setAuthCookie(res, user);
     res.status(201).json({ user });
   } catch (err) {
@@ -104,6 +167,7 @@ app.post('/api/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
+    await pool.query('UPDATE users SET is_online = true, last_seen_at = NOW() WHERE id = $1', [user.id]);
     setAuthCookie(res, user);
     res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
@@ -117,20 +181,40 @@ app.get('/api/me', authMiddleware, (req, res) => {
   res.json({ user: req.user });
 });
 
+// ---------- API: heartbeat — หน้าเว็บเรียกเป็นระยะขณะเปิดอยู่ เพื่อบอกว่ายังใช้งานอยู่ ----------
+app.post('/api/heartbeat', authMiddleware, async (req, res) => {
+  await pool.query('UPDATE users SET is_online = true, last_seen_at = NOW() WHERE id = $1', [req.user.id]);
+  res.json({ ok: true });
+});
+
 // ---------- API: ออกจากระบบ ----------
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', async (req, res) => {
+  const user = getVerifiedUser(req);
+  if (user) {
+    await pool.query('UPDATE users SET is_online = false WHERE id = $1', [user.id]).catch(() => {});
+  }
   res.clearCookie('gearhub_token');
   res.json({ ok: true });
 });
 
-// ---------- API: รายชื่อสมาชิกทั้งหมด (เฉพาะแอดมิน) ----------
+// ---------- API: รายชื่อสมาชิกทั้งหมด พร้อมสถานะออนไลน์/ออฟไลน์ (เฉพาะแอดมิน) ----------
 app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
-  const result = await pool.query(
-    'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
-  );
+  const result = await pool.query(`
+    SELECT id, name, email, role, created_at, last_seen_at,
+           (is_online AND last_seen_at > NOW() - INTERVAL '${ONLINE_THRESHOLD_SECONDS} seconds') AS online
+    FROM users
+    ORDER BY online DESC, last_seen_at DESC NULLS LAST, created_at DESC
+  `);
   res.json({ users: result.rows });
 });
 
-app.listen(PORT, () => {
-  console.log(`GEARHUB server running on http://localhost:${PORT}`);
-});
+migrate()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`GEARHUB server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('เตรียมฐานข้อมูลไม่สำเร็จ:', err);
+    process.exit(1);
+  });

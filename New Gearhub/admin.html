@@ -34,6 +34,12 @@
   .badge-member{ background:#e8f0fe; color:#2f5bff; }
   .state-box{ text-align:center; padding:60px 20px; color:#6b7280; }
   .state-box a{ color:var(--blue); }
+  .status-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .status-online{ color:#1a9c56; font-weight:500; }
+  .status-online .status-dot{ background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.18); }
+  .status-offline{ color:#9ca3af; }
+  .status-offline .status-dot{ background:#cbd5e1; }
+  .last-seen{ display:block; font-size:12px; color:#9ca3af; margin-top:2px; }
 </style>
 </head>
 <body>
@@ -54,6 +60,7 @@
           <th>ชื่อ-นามสกุล</th>
           <th>อีเมล</th>
           <th>สิทธิ์</th>
+          <th>สถานะ</th>
           <th>วันที่สมัคร</th>
         </tr>
       </thead>
@@ -74,6 +81,61 @@
     return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
+  function fmtLastSeen(iso){
+    if (!iso) return 'ยังไม่เคยเข้าสู่ระบบ';
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'เมื่อสักครู่';
+    if (mins < 60) return `${mins} นาทีที่แล้ว`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+    const days = Math.floor(hours / 24);
+    return `${days} วันที่แล้ว`;
+  }
+
+  let refreshTimer = null;
+
+  function renderUsers(users){
+    const onlineCount = users.filter(u => u.online).length;
+    subText.textContent = `ทั้งหมด ${users.length} บัญชี • ออนไลน์อยู่ตอนนี้ ${onlineCount} คน`;
+
+    const body = document.getElementById('usersBody');
+    body.innerHTML = users.map((u, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-member'}">${u.role === 'admin' ? 'แอดมิน' : 'สมาชิก'}</span></td>
+        <td>
+          <span class="${u.online ? 'status-online' : 'status-offline'}"><span class="status-dot"></span>${u.online ? 'ออนไลน์' : 'ออฟไลน์'}</span>
+          <span class="last-seen">${u.online ? 'กำลังใช้งานอยู่' : fmtLastSeen(u.last_seen_at)}</span>
+        </td>
+        <td>${fmtDate(u.created_at)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ดึงรายชื่อสมาชิกล่าสุดจากเซิร์ฟเวอร์ (ใช้ทั้งตอนโหลดครั้งแรกและตอน auto-refresh)
+  async function loadUsers({ silent } = {}){
+    try {
+      const res = await fetch('/api/users', { credentials: 'include' });
+      if (res.status === 403) {
+        if (!silent) { stateBox.textContent = 'บัญชีนี้ไม่ใช่แอดมิน จึงดูรายชื่อสมาชิกไม่ได้'; subText.textContent = ''; }
+        return;
+      }
+      if (!res.ok) {
+        if (!silent) stateBox.textContent = 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่';
+        return;
+      }
+      const { users } = await res.json();
+      renderUsers(users);
+      stateBox.style.display = 'none';
+      table.style.display = 'table';
+    } catch {
+      if (!silent) stateBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+    }
+  }
+
   async function init(){
     // เช็คสิทธิ์ก่อน
     let me;
@@ -92,35 +154,11 @@
     }
 
     // ดึงรายชื่อสมาชิก (เฉพาะแอดมิน — เซิร์ฟเวอร์เช็คซ้ำอีกชั้นเสมอ)
-    try {
-      const res = await fetch('/api/users', { credentials: 'include' });
-      if (res.status === 403) {
-        stateBox.textContent = 'บัญชีนี้ไม่ใช่แอดมิน จึงดูรายชื่อสมาชิกไม่ได้';
-        subText.textContent = '';
-        return;
-      }
-      if (!res.ok) {
-        stateBox.textContent = 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่';
-        return;
-      }
-      const { users } = await res.json();
-      subText.textContent = `ทั้งหมด ${users.length} บัญชี`;
+    await loadUsers();
 
-      const body = document.getElementById('usersBody');
-      body.innerHTML = users.map((u, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-member'}">${u.role === 'admin' ? 'แอดมิน' : 'สมาชิก'}</span></td>
-          <td>${fmtDate(u.created_at)}</td>
-        </tr>
-      `).join('');
-
-      stateBox.style.display = 'none';
-      table.style.display = 'table';
-    } catch {
-      stateBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+    // อัปเดตสถานะออนไลน์/ออฟไลน์อัตโนมัติทุก 15 วินาที โดยไม่ต้องรีเฟรชหน้าเอง
+    if (!refreshTimer) {
+      refreshTimer = setInterval(() => loadUsers({ silent: true }), 15000);
     }
   }
 

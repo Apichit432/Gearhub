@@ -46,6 +46,11 @@
 
       const { user } = await res.json();
 
+      // ส่งสัญญาณ "ยังใช้งานอยู่" เป็นระยะ ให้แอดมินเห็นว่าใครออนไลน์อยู่จริง
+      const sendHeartbeat = () => fetch('/api/heartbeat', { method: 'POST', credentials: 'include' }).catch(() => {});
+      sendHeartbeat();
+      setInterval(sendHeartbeat, 30000);
+
       if (user.role === 'admin') {
         const nav = document.querySelector('.main-nav');
         if (nav && !nav.querySelector('[data-admin-link]')) {
