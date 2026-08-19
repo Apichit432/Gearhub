@@ -59,11 +59,25 @@ function pageGate(req, res, next) {
   const base = path.basename(decodedPath).toLowerCase();
   if (PUBLIC_PAGES.has(base)) return next();
 
-  const user = getVerifiedUser(req);
-  if (!user) return res.redirect('/Login.html');
+  const payload = getVerifiedUser(req);
+  if (!payload) return res.redirect('/Login.html');
 
-  req.gearhubUser = user;
-  next();
+  // เช็คย้อนกลับไปฐานข้อมูลจริงเสมอ เผื่อบัญชีนี้ถูกแอดมินลบไปแล้วแต่ token เดิมยังไม่หมดอายุ
+  pool.query('SELECT id FROM users WHERE id = $1', [payload.id])
+    .then((result) => {
+      if (result.rowCount === 0) {
+        res.clearCookie('gearhub_token');
+        return res.redirect('/Login.html');
+      }
+      req.gearhubUser = payload;
+      next();
+    })
+    .catch((err) => {
+      console.error('pageGate DB check error:', err);
+      // ฐานข้อมูลมีปัญหาชั่วคราว — ปล่อยผ่านไปก่อนดีกว่าล็อกทุกคนไม่ให้เข้าเว็บทั้งเว็บ
+      req.gearhubUser = payload;
+      next();
+    });
 }
 
 app.use(pageGate);
@@ -84,14 +98,30 @@ function setAuthCookie(res, user) {
   });
 }
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const token = req.cookies.gearhub_token;
   if (!token) return res.status(401).json({ error: 'ยังไม่ได้เข้าสู่ระบบ' });
+
+  let payload;
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
+    payload = jwt.verify(token, JWT_SECRET);
   } catch {
     return res.status(401).json({ error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+  }
+
+  try {
+    // เช็คย้อนกลับไปฐานข้อมูลจริงเสมอ เผื่อบัญชีนี้ถูกแอดมินลบไปแล้วแต่ token เดิมยังไม่หมดอายุ
+    const result = await pool.query('SELECT id, name, email, role FROM users WHERE id = $1', [payload.id]);
+    const user = result.rows[0];
+    if (!user) {
+      res.clearCookie('gearhub_token');
+      return res.status(401).json({ error: 'บัญชีนี้ถูกลบออกจากระบบแล้ว กรุณาเข้าสู่ระบบใหม่' });
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('authMiddleware DB error:', err);
+    return res.status(500).json({ error: 'DB error' });
   }
 }
 

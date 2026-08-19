@@ -47,7 +47,16 @@
       const { user } = await res.json();
 
       // ส่งสัญญาณ "ยังใช้งานอยู่" เป็นระยะ ให้แอดมินเห็นว่าใครออนไลน์อยู่จริง
-      const sendHeartbeat = () => fetch('/api/heartbeat', { method: 'POST', credentials: 'include' }).catch(() => {});
+      // และถ้าบัญชีนี้ถูกแอดมินลบไปแล้ว (เซิร์ฟเวอร์ตอบ 401) ให้เด้งออกไปหน้า Login ทันที
+      const sendHeartbeat = () => {
+        fetch('/api/heartbeat', { method: 'POST', credentials: 'include' })
+          .then((hbRes) => {
+            if (hbRes.status === 401) {
+              window.location.href = 'Login.html';
+            }
+          })
+          .catch(() => {});
+      };
       sendHeartbeat();
       setInterval(sendHeartbeat, 30000);
 
